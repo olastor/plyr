@@ -58,6 +58,7 @@
                 controls: false,
                 seek: true
             },
+            marker: {},
             selectors: {
                 html5: "video, audio",
                 embed: "[data-type]",
@@ -818,7 +819,8 @@
             // Create html array
             var html = [],
                 iconUrl = _getIconUrl(),
-                iconPath = (!iconUrl.absolute ? iconUrl.url : "") + "#" + config.iconPrefix;
+                iconPath = (!iconUrl.absolute ? iconUrl.url : "") + "#" + config.iconPrefix,
+                duration = _getDuration();
 
             // Larger overlaid play button
             if (_inArray(config.controls, "play-large")) {
@@ -889,6 +891,22 @@
                     "<span>0</span>% " + config.i18n.buffered,
                     "</progress>"
                 );
+
+                // Marker knots
+                var marker = Object.keys(config.marker);
+                if (marker.length > 0) {
+                    html.push('<div class="plyr__marker">');
+
+                    marker.map(function (mark) {
+                        var pos = parseInt(mark);
+                        if (pos && pos > 0 && pos < duration) {
+                            html.push('<span style="left: ' + ((100 * pos) / duration) + '%;"></span>');
+                        }
+                    });
+
+                    html.push('</div>');
+                }
+
 
                 // Seek tooltip
                 if (config.tooltips.seek) {
@@ -2558,7 +2576,9 @@
                 time = 0;
             }
 
-            plyr.secs = parseInt(time % 60);
+            var secsInt = parseInt(time);
+
+            plyr.secs = secsInt % 60;
             plyr.mins = parseInt((time / 60) % 60);
             plyr.hours = parseInt((time / 60 / 60) % 60);
 
@@ -2570,7 +2590,9 @@
             plyr.mins = ("0" + plyr.mins).slice(-2);
 
             // Render
-            element.innerHTML = (displayHours ? plyr.hours + ":" : "") + plyr.mins + ":" + plyr.secs;
+            element.innerHTML = secsInt in config.marker
+                ? config.marker[secsInt]
+                : (displayHours ? plyr.hours + ":" : "") + plyr.mins + ":" + plyr.secs;
         }
 
         // Show the duration on metadataloaded
