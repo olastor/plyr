@@ -2556,11 +2556,6 @@
                 return;
             }
 
-            if (typeof time === 'string') {
-                element.innerHTML = time;
-                return;
-            }
-
             // Fallback to 0
             if (isNaN(time)) {
                 time = 0;
@@ -2673,10 +2668,11 @@
 
             // Display the time a click would seek to
             var position = duration / 100 * percent;
-            _updateTimeDisplay(
-                Math.floor(position) in config.marker ? config.marker[Math.floor(position)] : position,
-                plyr.progress.tooltip
-            );
+            if (Math.floor(position) in config.marker) {
+                plyr.progress.tooltip.innerHTML = config.marker[Math.floor(position)]
+            } else {
+                _updateTimeDisplay(position, plyr.progress.tooltip);
+            }
 
             // Set position
             plyr.progress.tooltip.style.left = percent + "%";
