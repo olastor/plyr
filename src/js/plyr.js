@@ -2774,6 +2774,9 @@
                     });
                 }
             });
+
+            // update config
+            config.marker = marker;
         }
 
         // Add common function to retrieve media source
