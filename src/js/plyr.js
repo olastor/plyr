@@ -58,6 +58,7 @@
                 controls: false,
                 seek: true
             },
+            marker: {},
             selectors: {
                 html5: "video, audio",
                 embed: "[data-type]",
@@ -887,7 +888,9 @@
                     '<progress class="plyr__progress--played" max="100" value="0" role="presentation"></progress>',
                     '<progress class="plyr__progress--buffer" max="100" value="0">',
                     "<span>0</span>% " + config.i18n.buffered,
-                    "</progress>"
+                    "</progress>",
+                    '<div class="plyr__marker">',
+                    "</div>"
                 );
 
                 // Seek tooltip
@@ -2664,7 +2667,12 @@
             }
 
             // Display the time a click would seek to
-            _updateTimeDisplay(duration / 100 * percent, plyr.progress.tooltip);
+            var position = duration / 100 * percent;
+            if (Math.floor(position) in config.marker) {
+                plyr.progress.tooltip.innerHTML = config.marker[Math.floor(position)]
+            } else {
+                _updateTimeDisplay(position, plyr.progress.tooltip);
+            }
 
             // Set position
             plyr.progress.tooltip.style.left = percent + "%";
@@ -2741,6 +2749,30 @@
                     _toggleClass(plyr.container, config.classes.hideControls, true);
                 }, delay);
             }
+        }
+
+        // Set marker points in progress bar
+        function _setMarker(marker) {
+            if (!_is.object(marker)) {
+                return;
+            }
+
+            var wrapperMarker = plyr.container.querySelector('.plyr__marker'),
+                duration = _getDuration(),
+                markerPointWidth = 100 / duration;
+
+            Object.keys(marker).forEach(function (index) {
+                var pos = parseInt(index);
+
+                if (!isNaN(pos) && pos >= 0 && pos <= duration) {
+                    _insertElement('span', wrapperMarker, {
+                        style: 'width:' + markerPointWidth + '%; left:' + (100 * pos) / duration + '%;'
+                    });
+                }
+            });
+
+            // update config
+            config.marker = marker;
         }
 
         // Add common function to retrieve media source
@@ -3257,7 +3289,13 @@
             _on(plyr.media, "timeupdate", _seekManualCaptions);
 
             // Display duration
-            _on(plyr.media, "durationchange loadedmetadata", _displayDuration);
+            _on(plyr.media, "durationchange loadedmetadata", function() {
+                _displayDuration();
+
+                if ('marker' in config) {
+                    _setMarker(config.marker);
+                }
+            });
 
             // Handle the media finishing
             _on(plyr.media, "ended", function() {
@@ -3578,6 +3616,7 @@
         }
 
         api = {
+            setMarker: _setMarker,
             getOriginal: function() {
                 return original;
             },
